@@ -26,3 +26,6 @@ study.jas
 *.njsproj
 *.sln
 *.sw?
+
+# Claude
+CLAUDE.md
