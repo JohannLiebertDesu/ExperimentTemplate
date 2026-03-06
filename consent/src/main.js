@@ -83,14 +83,6 @@ async function start() {
   const inJatos = typeof window.jatos !== "undefined";
 
   const jsPsych = initJsPsych({
-    // In javascript, && means: If the first thing is false, stop there, if its true, continue and return the second element. In this case, the AbortButton.
-    // We're not creating an abort button, we're telling jsPsych to call the function addAbortFunction on every trial by fetching it from JATOS.
-    ...(inJatos && { on_trial_start: window.jatos.addAbortButton }),
-    // The spread "unpacks content". If inJatos is true, the && gate returns { on_trial_start: window.jatos.addAbortButton }, which is unpacked to:
-    // on_trial_start: window.jatos.addAbortButton,
-    // Spreading "false" does nothing, it evaporates.
-    // Adding the abort button lets JATOS handle participants exiting gracefully - Which it couldn't if they just closed the browser manually.
-
     // jsPsych is told here what it should do with the data once the last trial in the timeline completes.
     on_finish: () => {
       if (inJatos) {
