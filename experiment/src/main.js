@@ -16,6 +16,7 @@ import "./style.css";
 import { stampParticipantData } from "../../functions/global/participantID";
 import { Settings } from "../../ExperimentSettings.js";
 import { checkEnrollmentCap } from "../../functions/global/enrollmentCap.js";
+import { assignCondition } from "../../functions/global/conditionAssignment.js";
 
 
 /**
@@ -115,10 +116,14 @@ async function start() {
       const proceed = await checkEnrollmentCap(Settings);
       if (!proceed) return; // closed message already shown by checkEnrollmentCap
       stampParticipantData(jsPsych, true);
+      const condition = await assignCondition(Settings);
+      if (condition !== null) jsPsych.data.addProperties({ condition });
       jsPsych.run(timeline);
     });
   } else {
     stampParticipantData(jsPsych, false);
+    const condition = await assignCondition(Settings);
+    if (condition !== null) jsPsych.data.addProperties({ condition });
     jsPsych.run(timeline);
   }
 }
