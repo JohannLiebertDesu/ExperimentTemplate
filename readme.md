@@ -5,7 +5,7 @@
 ### First-time setup (once per new study)
 
 - [ ] `npm install` — install dependencies
-- [ ] Edit `study-config.json` — set `title`, `dirName`, `description`, `maxParticipants`
+- [ ] Edit `study-config.json` — set `title`, `dirName`, `description`
 - [ ] `npm run init-study` — generates `study.jas` with UUIDs and batch config
 - [ ] **Never run `init-study` again** for this study — regenerating UUIDs causes JATOS to treat re-imports as a new study
 

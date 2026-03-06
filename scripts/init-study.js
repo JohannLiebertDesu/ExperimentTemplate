@@ -95,8 +95,6 @@ const jas = {
       },
     ],
     // Two batches: Main (real participants) and Test (researcher use).
-    // NOTE: JATOS creates these batches on import but does not restore
-    // worker type link state — configure those manually after first import.
     batchList: [
       {
         uuid: randomUUID(),
@@ -104,7 +102,7 @@ const jas = {
         active: true,
         maxActiveMembers: null,
         maxTotalMembers: null,
-        maxTotalWorkers: config.maxParticipants ?? null, // from study-config.json
+        maxTotalWorkers: null, 
         allowedWorkerTypes: ["GeneralMultiple"],
         comments: "Main data collection batch.",
         jsonData: null,

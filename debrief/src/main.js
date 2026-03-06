@@ -94,16 +94,33 @@ async function start() {
     // Adding the abort button lets JATOS handle participants exiting gracefully - Which it couldn't if they just closed the browser manually.
 
     // jsPsych is told here what it should do with the data once the last trial in the timeline completes.
-    on_finish: () => {
+    on_finish: async () => {
       if (inJatos) {
         // Open the file cabinet (data), grab the files (get()), and photocopy them to a document any browser can handle (.json()).
         const resultJson = jsPsych.data.get().json();
-        // If we're in JATOS, send the json string to JATOS and tell it to move to the next experiment part (e.g., consent form -> instructions -> task -> debrief). If there's no next component, the study simply ends.
+
+        // Increment the batch-level completion counter so we always know how many
+        // participants made it all the way through. add() means "create/overwrite",
+        // so the counter self-initializes to 1 on the very first completion — no
+        // pre-seeding needed. Wrapped in try/catch because batchSessionVersioning
+        // (on by default) rejects concurrent writes; a missed count is preferable
+        // to leaving the participant stuck before endStudy.
+        for (let attempt = 0; attempt < 2; attempt++) {
+          try {
+            const n = window.jatos.batchSession.get("completions") ?? 0;
+            await window.jatos.batchSession.add("/completions", n + 1);
+            break; // success — stop retrying
+          } catch (_) {
+            // Concurrent write conflict; retry once, then give up silently.
+          }
+        }
+
+        // If we're in JATOS, send the json string to JATOS and tell it to end the experiment.
         window.jatos.endStudy(resultJson);
       } else {
         // This is jsPsych's useful shortcut if we want to download data in json format.
         jsPsych.data.get().localSave("json", "data.json");
-        
+
         document.body.innerHTML = "<p>Study complete. You may close this tab.</p>";
       }
     },
