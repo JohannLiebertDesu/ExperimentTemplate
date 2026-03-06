@@ -14,6 +14,8 @@ import HtmlKeyboardResponsePlugin from "@jspsych/plugin-html-keyboard-response";
 // -> that way for modifications of the css we never need to kack jsPsych's own CSS
 import "./style.css";
 import { stampParticipantData } from "../../functions/global/participantID";
+import { Settings } from "../../ExperimentSettings.js";
+import { checkEnrollmentCap } from "../../functions/global/enrollmentCap.js";
 
 
 /**
@@ -117,7 +119,9 @@ async function start() {
   const timeline = makeTimeline();
 
   if (inJatos) {
-    window.jatos.onLoad( () => {
+    window.jatos.onLoad(async () => {
+      const proceed = await checkEnrollmentCap(Settings);
+      if (!proceed) return; // closed message already shown by checkEnrollmentCap
       stampParticipantData(jsPsych, true);
       jsPsych.run(timeline);
     });
