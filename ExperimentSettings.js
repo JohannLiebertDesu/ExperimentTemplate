@@ -31,6 +31,14 @@ export const Settings = {
     maxBlurs: 2,
   },
 
+  // ── Display ─────────────────────────────────────────────────────────────────
+  display: {
+    // Background colour for experiment/practice trials (applied via css_classes: "trial-bg").
+    // Standard mid-grey (#808080) is the convention in vision science — sRGB midpoint,
+    // neutral adaptation state for luminance contrast.
+    trialBackgroundColor: "#808080",
+  },
+
   // ── Study Information (used by consent pages) ──────────────────────────────
   study: {
     // What the study examines — shown under "What this study is about".
@@ -42,7 +50,7 @@ export const Settings = {
       "Your task will be to [brief description of what participants do].",
 
     // Approximate duration — shown under "Duration & compensation".
-    duration: "30 minutes",
+    duration: "1 hour",
 
     // Compensation text (non-Prolific). Prolific overrides this automatically.
     compensation: "1 participant subject hour",
