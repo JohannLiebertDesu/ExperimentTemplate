@@ -63,8 +63,11 @@ export function createBlurMonitor(settings) {
       // Exit fullscreen first so the participant isn't stuck in a blank fullscreen window.
       if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
       jsPsych.abortExperiment(
-        `<p>Unfortunately, you have left the browser tab too many times.</p>
-         <p>The experiment must end. Your data has been recorded.</p>`
+        `<div class="abort-message">
+           <h2 class="abort-message-title">Experiment Ended</h2>
+           <p>Unfortunately, you have left the browser tab too many times.</p>
+           <p>The experiment must end. <strong>Your data has been recorded.</strong></p>
+         </div>`
       );
     } else {
       // Warning — pause and let them continue.

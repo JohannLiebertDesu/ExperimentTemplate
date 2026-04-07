@@ -28,8 +28,11 @@ export function makeScreenCheck(jsPsych, settings, blurMonitor) {
         // Exit fullscreen first so the participant sees the message in a normal window.
         if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
         jsPsych.abortExperiment(
-          `<p>Your screen does not meet the minimum size requirements for this experiment.</p>
-           <p>Please use a desktop or laptop computer with a larger screen.</p>`
+          `<div class="abort-message">
+             <h2 class="abort-message-title">Screen Too Small</h2>
+             <p>Your screen does not meet the minimum size requirements for this experiment.</p>
+             <p>Please use a <strong>desktop or laptop computer</strong> with a larger screen.</p>
+           </div>`
         );
       } else {
         // Screen is fine — start monitoring tab switches from here on.

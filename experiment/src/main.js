@@ -15,43 +15,12 @@ import HtmlKeyboardResponsePlugin from "@jspsych/plugin-html-keyboard-response";
 import "./style.css";
 import { stampParticipantData } from "../../functions/global/participantID";
 import { Settings } from "../../ExperimentSettings.js";
+import { loadJatosScript } from "../../functions/global/jatos.js";
 import { checkEnrollmentCap } from "../../functions/global/enrollmentCap.js";
 import { assignCondition } from "../../functions/global/conditionAssignment.js";
 import { makeScreenCheck } from "../../functions/global/screenCheck.js";
 import { createBlurMonitor } from "../../functions/global/blurMonitor.js";
-
-
-/**
- * Loads JATOS' runtime-injected `jatos.js` (available only when running inside JATOS).
- *
- * JATOS injects `jatos.js` at runtime on its own server — it's never in your source code.
- * This loader attempts to fetch it: it succeeds in JATOS and fails gracefully (404) locally.
- * The boolean result lets you set an `inJatos` flag and branch behavior.
- *
- * @returns {Promise<boolean>} Resolves `true` if `jatos.js` loaded, otherwise `false`.
- */
-function loadJatosScript() {
-  return new Promise((resolve) => {
-    // Creates a new script element in memory. At this point it's just floating, not attached to the page, not doing anything.
-    // Document is only the factory, the script itself is not attached to document yet!
-    const s = document.createElement("script");
-    // Sets the script's source URL. Still hasn't fetched anything yet.
-    s.src = "jatos.js"; // exists in JATOS, 404 locally
-    // Tells the browser "when you do fetch this, don't block anything else while you're doing it." Like saying "go pick this up in the background."
-    s.async = true;
-    // Sets up two possible outcomes: if the jatos.js script can successfully be found, resolve the Promise with true. 
-    // If it fails (404 locally), resolve with false. Crucially, both paths resolve — neither rejects.
-    // The promise always completes successfully; it just carries a different answer.
-    s.onload = () => resolve(true);
-    s.onerror = () => resolve(false);
-    // This is the trigger. The moment you append the script element to the page's <head>, the browser actually goes out and tries to fetch jatos.js from the network. 
-    // Everything before this was just preparation.
-    document.head.appendChild(s);
-    // If the load succeeds (we're in JATOS), the fetched script executes. That execution is what creates the window.jatos object with all its methods (onLoad, addAbortButton, startNextComponent, etc.). 
-    // The window.jatos object lets us talk with the already running JATOS server.
-    // document.head is the <head> section of the HTML -> the part that holds metadata, CSS links and scripts that configure the page (not stuff we "see")
-  });
-}
+import { makeInstructions } from "./instructions.js";
 
 function makeTimeline(jsPsych, blurMonitor) {
   const timeline = [];
@@ -62,24 +31,29 @@ function makeTimeline(jsPsych, blurMonitor) {
   //   images: ["assets/instructions/Slide1.gif"],
   // });
 
-  timeline.push({
-    type: HtmlKeyboardResponsePlugin,
-    stimulus: "<p><strong>Experiment</strong></p><p>The experiment is about to begin. You will first enter fullscreen mode, then your screen will be checked. Press any key to continue.</p>",
-  });
-
   // NOTE: When the browser later exits fullscreen (e.g. page navigation to debrief),
   // it briefly flashes a cached snapshot of the page from when fullscreen was entered
-  // (the button/message from this trial). This is a browser compositor-level behaviour
+  // (the message + button from this trial). This is a browser compositor-level behaviour
   // that cannot be prevented from JavaScript — it's cosmetic and lasts ~1 frame.
   timeline.push({
     type: FullscreenPlugin,
     fullscreen_mode: true,
+    message: `
+      <p><strong>Experiment</strong></p>
+      <p>The experiment is about to begin. Your screen will be checked for
+      compatibility, after which you will receive detailed instructions.</p>
+      <p>Click the button below to enter fullscreen mode and continue.</p>
+    `,
   });
 
   // Right after fullscreen: verify the screen is large enough, then arm blur tracking.
   timeline.push(makeScreenCheck(jsPsych, Settings.browserChecks, blurMonitor));
 
-  // ── Your experiment trials go here (between screen check and fullscreen exit) ──
+  // ── Instructions (back/next navigation) ──
+  // Edit the pages in experiment/src/instructions.js.
+  timeline.push(makeInstructions());
+
+  // ── Your experiment trials go here (between instructions and "Experiment Complete") ──
   timeline.push({
     type: HtmlKeyboardResponsePlugin,
     stimulus: "<p><strong>Experiment Running</strong></p><p>This is a placeholder for your experiment trials. They run in fullscreen with blur monitoring active. Press any key to continue.</p>",

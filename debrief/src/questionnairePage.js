@@ -26,8 +26,8 @@ export function questionnaireSurveyJSON() {
           {
             type: "html",
             html: `
-              <h2 style="margin-bottom: 0.25em;">Post-Experiment Questionnaire</h2>
-              <p style="color: #666; font-size: 0.95em;">
+              <h2 class="questionnaire-title">Post-Experiment Questionnaire</h2>
+              <p class="questionnaire-lead">
                 These questions are for data quality purposes only and have
                 <strong>no effect on your compensation</strong>. Please answer honestly.
               </p>
