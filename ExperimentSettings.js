@@ -12,4 +12,14 @@ export const Settings = {
   // e.g. ['A', 'B'] or ['control', 'treatment'] or ['0deg', '45deg', '90deg'].
   // null = no condition assignment.
   conditions: null,
+
+  // Minimum browser window dimensions (checked after entering fullscreen).
+  // If the screen is smaller, the experiment ends with "failed_resize".
+  minScreenWidth: 1200,
+  minScreenHeight: 700,
+
+  // Maximum number of times a participant can leave the browser tab (blur events)
+  // before the experiment ends with "failed_attention_check".
+  // null = no blur tracking.
+  maxBlurs: 2,
 };

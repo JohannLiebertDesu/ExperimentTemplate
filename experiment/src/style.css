@@ -1,3 +1,6 @@
-.jspsych-display-element {
-background: #fff;
-}
+/* ──────────────────────────────────────────────────────────────
+   Experiment-specific styles — imports the shared template base,
+   then adds overrides needed only during the experiment component
+   (fullscreen, stimuli, etc.).
+   ────────────────────────────────────────────────────────────── */
+@import "../../styles/common.css";

@@ -59,12 +59,12 @@ function makeTimeline() {
 
   timeline.push({
     type: HtmlKeyboardResponsePlugin,
-    stimulus: "<p>Welcome. Press any key to continue.</p>",
+    stimulus: "<p><strong>Debrief</strong></p><p>Thank you for participating. This is a placeholder for the debrief information. Press any key to continue.</p>",
   });
 
   timeline.push({
     type: HtmlKeyboardResponsePlugin,
-    stimulus: "<p>Done. Press any key to continue.</p>",
+    stimulus: "<p>The study is now complete. You may close this window. Press any key to finish.</p>",
   });
 
   return timeline;

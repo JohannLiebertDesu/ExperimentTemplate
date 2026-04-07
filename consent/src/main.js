@@ -58,12 +58,12 @@ function makeTimeline() {
 
   timeline.push({
     type: HtmlKeyboardResponsePlugin,
-    stimulus: "<p>Welcome. Press any key to continue.</p>",
+    stimulus: "<p><strong>Consent Form</strong></p><p>This is a placeholder for the consent information. Press any key to agree and continue.</p>",
   });
 
   timeline.push({
     type: HtmlKeyboardResponsePlugin,
-    stimulus: "<p>Done. Press any key to continue.</p>",
+    stimulus: "<p>Thank you for consenting. You will now be directed to the experiment. Press any key to continue.</p>",
   });
 
   return timeline;

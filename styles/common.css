@@ -1,3 +1,165 @@
+/* ──────────────────────────────────────────────────────────────
+   Template base styles — loaded AFTER jspsych.css so these
+   always win. Shared across all components; experiment/src/
+   style.css imports this then adds its own overrides.
+   ────────────────────────────────────────────────────────────── */
+
+/* ── Page & background ── */
 .jspsych-display-element {
-background: #fff;
+  background: #fafafa;
+}
+
+/* ── Typography ── */
+.jspsych-content {
+  max-width: 720px;
+  padding: 0 1.5rem;
+  color: #2c2c2c;
+}
+
+.jspsych-content p {
+  font-size: 1.15rem;
+  line-height: 1.75;
+  margin: 0.75em 0;
+}
+
+.jspsych-content strong {
+  font-weight: 600;
+  color: #1a1a1a;
+}
+
+.jspsych-content h1 {
+  font-size: 1.75rem;
+  font-weight: 600;
+  color: #1a1a1a;
+  margin-top: 1.25em;
+  margin-bottom: 0.5em;
+  line-height: 1.3;
+}
+
+.jspsych-content h2 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #1a1a1a;
+  margin-top: 1.25em;
+  margin-bottom: 0.5em;
+  line-height: 1.3;
+}
+
+.jspsych-content h3 {
+  font-size: 1.3rem;
+  font-weight: 600;
+  color: #1a1a1a;
+  margin-top: 1.25em;
+  margin-bottom: 0.5em;
+  line-height: 1.3;
+}
+
+/* ── Buttons ── */
+.jspsych-btn {
+  font-size: 0.95rem;
+  font-weight: 500;
+  padding: 0.6rem 1.6rem;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  background: #fff;
+  color: #2c2c2c;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, box-shadow 0.15s;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+@media (hover: hover) {
+  .jspsych-btn:hover {
+    background: #f5f5f5;
+    border-color: #aaa;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+  }
+}
+
+.jspsych-btn:active {
+  background: #eee;
+  border-color: #999;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.08);
+}
+
+/* ── Progress bar ── */
+#jspsych-progressbar-container {
+  background: #f5f5f5;
+  border-bottom: 1px solid #e5e5e5;
+}
+
+#jspsych-progressbar-inner {
+  background: #888;
+}
+
+/* ──────────────────────────────────────────────────────────────
+   Overlay — used by blurMonitor.js for tab-leave warnings
+   ────────────────────────────────────────────────────────────── */
+.template-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  background: rgba(0, 0, 0, 0.82);
+  color: #f0f0f0;
+  font-family: "Open Sans", "Arial", sans-serif;
+}
+
+.template-overlay-card {
+  text-align: center;
+  max-width: 520px;
+  padding: 2.5rem 2rem;
+  background: #1e1e1e;
+  border-radius: 10px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
+}
+
+.template-overlay-card h2 {
+  margin: 0 0 0.75rem;
+  font-weight: 600;
+  font-size: 1.35rem;
+}
+
+.template-overlay-card p {
+  font-size: 0.95rem;
+  line-height: 1.65;
+  margin: 0.5em 0;
+  color: #ccc;
+}
+
+.template-overlay-card .overlay-btn {
+  display: inline-block;
+  margin-top: 1.25rem;
+  padding: 0.55rem 2rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  border-radius: 6px;
+  transition: background 0.15s, transform 0.1s;
+}
+
+.template-overlay-card .overlay-btn:active {
+  transform: scale(0.97);
+}
+
+/* Warning variant (amber) */
+.template-overlay--warning .template-overlay-card h2 {
+  color: #f0ad4e;
+}
+
+.template-overlay--warning .overlay-btn {
+  background: #f0ad4e;
+  color: #1e1e1e;
+}
+
+@media (hover: hover) {
+  .template-overlay--warning .overlay-btn:hover {
+    background: #f5c169;
+  }
 }

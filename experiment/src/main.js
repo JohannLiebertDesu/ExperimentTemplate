@@ -17,6 +17,8 @@ import { stampParticipantData } from "../../functions/global/participantID";
 import { Settings } from "../../ExperimentSettings.js";
 import { checkEnrollmentCap } from "../../functions/global/enrollmentCap.js";
 import { assignCondition } from "../../functions/global/conditionAssignment.js";
+import { makeScreenCheck } from "../../functions/global/screenCheck.js";
+import { createBlurMonitor } from "../../functions/global/blurMonitor.js";
 
 
 /**
@@ -51,7 +53,7 @@ function loadJatosScript() {
   });
 }
 
-function makeTimeline() {
+function makeTimeline(jsPsych, blurMonitor) {
   const timeline = [];
 
   // timeline.push({
@@ -62,17 +64,30 @@ function makeTimeline() {
 
   timeline.push({
     type: HtmlKeyboardResponsePlugin,
-    stimulus: "<p>Welcome. Press any key to continue.</p>",
+    stimulus: "<p><strong>Experiment</strong></p><p>The experiment is about to begin. You will first enter fullscreen mode, then your screen will be checked. Press any key to continue.</p>",
   });
 
+  // NOTE: When the browser later exits fullscreen (e.g. page navigation to debrief),
+  // it briefly flashes a cached snapshot of the page from when fullscreen was entered
+  // (the button/message from this trial). This is a browser compositor-level behaviour
+  // that cannot be prevented from JavaScript — it's cosmetic and lasts ~1 frame.
   timeline.push({
     type: FullscreenPlugin,
     fullscreen_mode: true,
   });
 
+  // Right after fullscreen: verify the screen is large enough, then arm blur tracking.
+  timeline.push(makeScreenCheck(jsPsych, Settings, blurMonitor));
+
+  // ── Your experiment trials go here (between screen check and fullscreen exit) ──
   timeline.push({
     type: HtmlKeyboardResponsePlugin,
-    stimulus: "<p>Done. Press any key to continue.</p>",
+    stimulus: "<p><strong>Experiment Running</strong></p><p>This is a placeholder for your experiment trials. They run in fullscreen with blur monitoring active. Press any key to continue.</p>",
+  });
+
+  timeline.push({
+    type: HtmlKeyboardResponsePlugin,
+    stimulus: "<p><strong>Experiment Complete</strong></p><p>You have finished the experiment. Press any key to continue to the debrief.</p>",
   });
 
   return timeline;
@@ -91,25 +106,69 @@ async function start() {
   // typeof is used because it wont throw an error on things that might not exist at all.
   const inJatos = typeof window.jatos !== "undefined";
 
+  // Create the blur monitor before initJsPsych so we can pass its handler as a config option.
+  // It stays dormant until activate() is called by the screen check on success,
+  // so blurs during setup screens (fullscreen prompt, etc.) don't count.
+  const blurMonitor = createBlurMonitor(Settings);
+
   const jsPsych = initJsPsych({
+    // Fires every time the participant switches away from or back to the tab.
+    // The blur monitor uses this to count tab-leaves and warn/end accordingly.
+    on_interaction_data_update: (data) => blurMonitor.handler(data),
     // jsPsych is told here what it should do with the data once the last trial in the timeline completes.
-    on_finish: () => {
+    on_finish: async () => {
+      // Check whether the experiment ended early due to a screen or attention failure.
+      // addProperties() stamps every trial row, so any row carries the flag.
+      const trials = jsPsych.data.get().values();
+      const status = trials.length > 0 ? trials[0].experiment_status : undefined;
+      const failed =
+        status === "failed_resize" || status === "failed_attention_check";
+
       if (inJatos) {
         // Open the file cabinet (data), grab the files (get()), and photocopy them to a document any browser can handle (.json()).
         const resultJson = jsPsych.data.get().json();
-        // If we're in JATOS, send the json string to JATOS and tell it to move to the next experiment part (e.g., consent form -> instructions -> task -> debrief). If there's no next component, the study simply ends.
-        window.jatos.startNextComponent(resultJson);
+
+        if (failed) {
+          // Screen-size failures free the enrollment slot — the participant
+          // never could have run, so we release the "started" count.
+          if (status === "failed_resize") {
+            for (let attempt = 0; attempt < 2; attempt++) {
+              try {
+                const n = window.jatos.batchSession.get("started") ?? 0;
+                if (n > 0)
+                  await window.jatos.batchSession.add("/started", n - 1);
+                break;
+              } catch (_) {
+                // Version conflict — retry once.
+              }
+            }
+          }
+          // End study directly — skip debrief. Data still reaches JATOS
+          // with the experiment_status flag for filtering during analysis.
+          window.jatos.endStudy(resultJson);
+        } else {
+          // Normal completion — proceed to debrief.
+          window.jatos.startNextComponent(resultJson);
+        }
       } else {
         // This is jsPsych's useful shortcut if we want to download data in json format.
         jsPsych.data.get().localSave("json", "data.json");
-                
+
         // Locally, JATOS isn't available to navigate for us, so we redirect manually.
-        window.location.href = "/debrief.html";
+        // But only if the experiment completed normally — on failure, stay on the end message.
+        if (!failed) {
+          window.location.href = "/debrief.html";
+        }
       }
     },
   });
 
-  const timeline = makeTimeline();
+  // Now that jsPsych exists, hand it to the blur monitor so it can call
+  // pauseExperiment(), resumeExperiment(), and abortExperiment() when needed.
+  blurMonitor.init(jsPsych);
+
+  // Trial list is assembled. Nothing runs yet.
+  const timeline = makeTimeline(jsPsych, blurMonitor);
 
   if (inJatos) {
     window.jatos.onLoad(async () => {
