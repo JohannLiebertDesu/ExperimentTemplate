@@ -66,7 +66,7 @@ async function start() {
           // Prolific path: data was already submitted and completions counter
           // was already incremented during the redirect countdown page's on_load.
           // Just end the study — JATOS redirects to Prolific via endRedirectUrl.
-          window.jatos.endStudy();
+          window.jatos.endStudy(undefined, true, "study_complete (prolific)");
         } else {
           // Non-Prolific JATOS path: submit data and increment completions here.
           const resultJson = jsPsych.data.get().json();
@@ -88,7 +88,7 @@ async function start() {
           }
 
           // Send the json string to JATOS and tell it to end the experiment.
-          window.jatos.endStudy(resultJson);
+          window.jatos.endStudy(resultJson, true, "study_complete");
         }
       } else {
         // This is jsPsych's useful shortcut if we want to download data in json format.

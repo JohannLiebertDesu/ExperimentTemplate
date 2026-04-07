@@ -94,7 +94,7 @@ async function start() {
       if (inJatos) {
         // If we're in JATOS, tell it to move to the next component (experiment).
         // No data to send from consent — the important thing is that they agreed.
-        window.jatos.startNextComponent();
+        window.jatos.startNextComponent(undefined, "consent_given");
       } else {
         // Locally, JATOS isn't available to navigate for us, so we redirect manually.
         window.location.href = "/experiment.html";

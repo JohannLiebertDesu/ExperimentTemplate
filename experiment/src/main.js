@@ -127,10 +127,12 @@ async function start() {
           }
           // End study directly — skip debrief. Data still reaches JATOS
           // with the experiment_status flag for filtering during analysis.
-          window.jatos.endStudy(resultJson);
+          // The message (max 255 chars) appears in JATOS's "message" results column.
+          window.jatos.endStudy(resultJson, false, status);
         } else {
           // Normal completion — proceed to debrief.
-          window.jatos.startNextComponent(resultJson);
+          // The message appears in JATOS's "message" results column for this component.
+          window.jatos.startNextComponent(resultJson, "experiment_complete");
         }
       } else {
         // This is jsPsych's useful shortcut if we want to download data in json format.
