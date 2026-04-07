@@ -1,19 +1,23 @@
-// This is your control flow — it decides what happens in what order. 
-// The import statements at the top are like calling in actors (plugins) from their dressing rooms (node_modules). 
-// The makeTimeline() function is your scene list. 
+// This is your control flow — it decides what happens in what order.
+// The import statements at the top are like calling in actors (plugins) from their dressing rooms (node_modules).
+// The makeTimeline() function is your scene list.
 // The start() function handles the "which theatre are we in?" logic (JATOS vs local).
 
 import { initJsPsych } from "jspsych";
 import "jspsych/css/jspsych.css";
 
-import PreloadPlugin from "@jspsych/plugin-preload";
-import FullscreenPlugin from "@jspsych/plugin-fullscreen";
-import HtmlKeyboardResponsePlugin from "@jspsych/plugin-html-keyboard-response";
+import SurveyPlugin from "@jspsych/plugin-survey";
+import "@jspsych/plugin-survey/css/survey.css";
+import HtmlButtonResponsePlugin from "@jspsych/plugin-html-button-response";
 
-// Since we load the following import after the jspsych/css/jspsych.css import, it always wins 
+import { Settings } from "../../ExperimentSettings.js";
+import { stampParticipantData } from "../../functions/global/participantID";
+import { questionnaireSurveyJSON } from "./questionnairePage.js";
+import { debriefPageHTML } from "./debriefPage.js";
+
+// Since we load the following import after the jspsych/css/jspsych.css import, it always wins
 // -> that way for modifications of the css we never need to hack jsPsych's own CSS
 import "../../styles/common.css";
-import { stampParticipantData } from "../../functions/global/participantID";
 
 
 /**
@@ -34,15 +38,15 @@ function loadJatosScript() {
     s.src = "jatos.js"; // exists in JATOS, 404 locally
     // Tells the browser "when you do fetch this, don't block anything else while you're doing it." Like saying "go pick this up in the background."
     s.async = true;
-    // Sets up two possible outcomes: if the jatos.js script can successfully be found, resolve the Promise with true. 
+    // Sets up two possible outcomes: if the jatos.js script can successfully be found, resolve the Promise with true.
     // If it fails (404 locally), resolve with false. Crucially, both paths resolve — neither rejects.
     // The promise always completes successfully; it just carries a different answer.
     s.onload = () => resolve(true);
     s.onerror = () => resolve(false);
-    // This is the trigger. The moment you append the script element to the page's <head>, the browser actually goes out and tries to fetch jatos.js from the network. 
+    // This is the trigger. The moment you append the script element to the page's <head>, the browser actually goes out and tries to fetch jatos.js from the network.
     // Everything before this was just preparation.
     document.head.appendChild(s);
-    // If the load succeeds (we're in JATOS), the fetched script executes. That execution is what creates the window.jatos object with all its methods (onLoad, addAbortButton, startNextComponent, etc.). 
+    // If the load succeeds (we're in JATOS), the fetched script executes. That execution is what creates the window.jatos object with all its methods (onLoad, addAbortButton, startNextComponent, etc.).
     // The window.jatos object lets us talk with the already running JATOS server.
     // document.head is the <head> section of the HTML -> the part that holds metadata, CSS links and scripts that configure the page (not stuff we "see")
   });
@@ -51,20 +55,19 @@ function loadJatosScript() {
 function makeTimeline() {
   const timeline = [];
 
-  // timeline.push({
-  //   type: PreloadPlugin,
-  //   // files put into public/assets/... can be referenced here, like so:
-  //   images: ["assets/instructions/Slide1.gif"],
-  // });
-
+  // Page 1: Post-experiment questionnaire
+  // Questions are defined in questionnairePage.js — edit that file to customise.
   timeline.push({
-    type: HtmlKeyboardResponsePlugin,
-    stimulus: "<p><strong>Debrief</strong></p><p>Thank you for participating. This is a placeholder for the debrief information. Press any key to continue.</p>",
+    type: SurveyPlugin,
+    survey_json: questionnaireSurveyJSON(),
   });
 
+  // Page 2: Debrief text — explains the study and provides contact info.
+  // Content is defined in debriefPage.js; contact info pulled from Settings.
   timeline.push({
-    type: HtmlKeyboardResponsePlugin,
-    stimulus: "<p>The study is now complete. You may close this window. Press any key to finish.</p>",
+    type: HtmlButtonResponsePlugin,
+    stimulus: debriefPageHTML(Settings),
+    choices: ["Finish"],
   });
 
   return timeline;
@@ -122,7 +125,7 @@ async function start() {
   const timeline = makeTimeline();
 
   if (inJatos) {
-    window.jatos.onLoad( () => {
+    window.jatos.onLoad(() => {
       stampParticipantData(jsPsych, true);
       jsPsych.run(timeline);
     });
