@@ -82,6 +82,112 @@
   box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.08);
 }
 
+/* ── Buttons — disabled state ── */
+.jspsych-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+/* ── Lists ── */
+.jspsych-content ul,
+.jspsych-content ol {
+  text-align: left;
+  margin: 0.5em 0;
+  padding-left: 1.5em;
+}
+
+.jspsych-content li {
+  font-size: 1.05rem;
+  line-height: 1.7;
+  margin-bottom: 0.35em;
+}
+
+/* ──────────────────────────────────────────────────────────────
+   Consent & debrief — left-aligned document-style layouts
+   ────────────────────────────────────────────────────────────── */
+.consent-form {
+  text-align: left;
+  max-width: 660px;
+  margin: 0 auto;
+  padding: 0.5rem 0 1rem;
+}
+
+.consent-form h1 {
+  text-align: center;
+  font-size: 1.55rem;
+  margin-bottom: 0.15em;
+}
+
+.consent-lead {
+  text-align: center;
+  color: #777;
+  font-size: 0.95rem !important;
+  font-style: italic;
+  margin-bottom: 1.5rem !important;
+}
+
+.consent-section {
+  margin-bottom: 1rem;
+}
+
+.consent-section h2 {
+  font-size: 1.1rem;
+  color: #333;
+  border-bottom: 1px solid #e5e5e5;
+  padding-bottom: 0.25rem;
+  margin-bottom: 0.4rem;
+  margin-top: 1rem;
+}
+
+.consent-section p,
+.consent-section ul {
+  font-size: 1rem !important;
+  line-height: 1.7;
+  color: #444;
+}
+
+/* Checkbox agreement panel */
+.consent-agreements {
+  background: #f2f2f2;
+  border-radius: 8px;
+  padding: 1.1rem 1.3rem;
+  margin: 1.5rem 0 0.75rem;
+}
+
+.consent-checkbox {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.7rem;
+  margin-bottom: 0.7rem;
+  cursor: pointer;
+  font-size: 0.95rem;
+  line-height: 1.55;
+  color: #333;
+}
+
+.consent-checkbox:last-child {
+  margin-bottom: 0;
+}
+
+.consent-checkbox input[type="checkbox"] {
+  width: 1.1rem;
+  height: 1.1rem;
+  margin-top: 0.2rem;
+  flex-shrink: 0;
+  accent-color: #4a7c59;
+  cursor: pointer;
+}
+
+/* Contact / footnote line */
+.consent-contact {
+  font-size: 0.85rem !important;
+  color: #999 !important;
+  margin-top: 1.5rem !important;
+  padding-top: 0.75rem;
+  border-top: 1px solid #e5e5e5;
+}
+
 /* ── Progress bar ── */
 #jspsych-progressbar-container {
   background: #f5f5f5;

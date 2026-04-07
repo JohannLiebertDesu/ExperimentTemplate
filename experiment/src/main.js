@@ -77,7 +77,7 @@ function makeTimeline(jsPsych, blurMonitor) {
   });
 
   // Right after fullscreen: verify the screen is large enough, then arm blur tracking.
-  timeline.push(makeScreenCheck(jsPsych, Settings, blurMonitor));
+  timeline.push(makeScreenCheck(jsPsych, Settings.browserChecks, blurMonitor));
 
   // ── Your experiment trials go here (between screen check and fullscreen exit) ──
   timeline.push({
@@ -109,7 +109,7 @@ async function start() {
   // Create the blur monitor before initJsPsych so we can pass its handler as a config option.
   // It stays dormant until activate() is called by the screen check on success,
   // so blurs during setup screens (fullscreen prompt, etc.) don't count.
-  const blurMonitor = createBlurMonitor(Settings);
+  const blurMonitor = createBlurMonitor(Settings.browserChecks);
 
   const jsPsych = initJsPsych({
     // Fires every time the participant switches away from or back to the tab.
@@ -172,16 +172,16 @@ async function start() {
 
   if (inJatos) {
     window.jatos.onLoad(async () => {
-      const proceed = await checkEnrollmentCap(Settings);
+      const proceed = await checkEnrollmentCap(Settings.recruitment);
       if (!proceed) return; // closed message already shown by checkEnrollmentCap
       stampParticipantData(jsPsych, true);
-      const condition = await assignCondition(Settings);
+      const condition = await assignCondition(Settings.recruitment);
       if (condition !== null) jsPsych.data.addProperties({ condition });
       jsPsych.run(timeline);
     });
   } else {
     stampParticipantData(jsPsych, false);
-    const condition = await assignCondition(Settings);
+    const condition = await assignCondition(Settings.recruitment);
     if (condition !== null) jsPsych.data.addProperties({ condition });
     jsPsych.run(timeline);
   }
