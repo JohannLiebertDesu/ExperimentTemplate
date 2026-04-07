@@ -16,5 +16,5 @@
      { type: SomePlugin, stimulus: "...", css_classes: "trial-bg" }
    ────────────────────────────────────────────────────────────── */
 .trial-bg {
-  background: var(--trial-bg, #808080);
+  background: var(--trial-bg, oklch(0.6 0 0));
 }

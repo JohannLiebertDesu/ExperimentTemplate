@@ -34,9 +34,10 @@ export const Settings = {
   // ── Display ─────────────────────────────────────────────────────────────────
   display: {
     // Background colour for experiment/practice trials (applied via css_classes: "trial-bg").
-    // Standard mid-grey (#808080) is the convention in vision science — sRGB midpoint,
-    // neutral adaptation state for luminance contrast.
-    trialBackgroundColor: "#808080",
+    // Standard mid-grey is the convention in vision science — neutral adaptation state
+    // for luminance contrast. OKLCH 0.6 lightness, zero chroma = perceptually uniform grey.
+    // Any CSS colour format works (hex, rgb, hsl, oklch, named).
+    trialBackgroundColor: "oklch(0.6 0 0)",
   },
 
   // ── Study Information (used by consent pages) ──────────────────────────────
