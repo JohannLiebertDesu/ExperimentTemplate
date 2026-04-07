@@ -16,6 +16,7 @@ import { stampParticipantData } from "../../functions/global/participantID";
 import { questionnaireSurveyJSON } from "./questionnairePage.js";
 import { debriefPageHTML } from "./debriefPage.js";
 import { makeRedirectTrial } from "./redirectPage.js";
+import { PROLIFIC_COMPLETED_URL } from "./prolificCodes.js";
 
 // Since we load the following import after the jspsych/css/jspsych.css import, it always wins
 // -> that way for modifications of the css we never need to hack jsPsych's own CSS
@@ -65,8 +66,8 @@ async function start() {
         if (useProlific) {
           // Prolific path: data was already submitted and completions counter
           // was already incremented during the redirect countdown page's on_load.
-          // Just end the study — JATOS redirects to Prolific via endRedirectUrl.
-          window.jatos.endStudy(undefined, true, "study_complete (prolific)");
+          // Redirect to Prolific with the success completion code.
+          window.jatos.endStudyAndRedirect(PROLIFIC_COMPLETED_URL, true, "study_complete (prolific)");
         } else {
           // Non-Prolific JATOS path: submit data and increment completions here.
           const resultJson = jsPsych.data.get().json();

@@ -21,6 +21,7 @@ import { assignCondition } from "../../functions/global/conditionAssignment.js";
 import { makeScreenCheck } from "../../functions/global/screenCheck.js";
 import { createBlurMonitor } from "../../functions/global/blurMonitor.js";
 import { makeInstructions } from "./instructions.js";
+import { ProlificFailCodes } from "./prolificFailCodes.js";
 
 function makeTimeline(jsPsych, blurMonitor) {
   const timeline = [];
@@ -128,7 +129,15 @@ async function start() {
           // End study directly — skip debrief. Data still reaches JATOS
           // with the experiment_status flag for filtering during analysis.
           // The message (max 255 chars) appears in JATOS's "message" results column.
-          window.jatos.endStudy(resultJson, false, status);
+          if (Settings.recruitment.useProlific) {
+            // Redirect to Prolific with the appropriate failure code.
+            const redirectUrl = status === "failed_resize"
+              ? ProlificFailCodes.screenedOut
+              : ProlificFailCodes.attentionFailed;
+            window.jatos.endStudyAndRedirect(redirectUrl, false, status);
+          } else {
+            window.jatos.endStudy(resultJson, false, status);
+          }
         } else {
           // Normal completion — proceed to debrief.
           // The message appears in JATOS's "message" results column for this component.
