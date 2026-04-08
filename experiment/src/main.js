@@ -9,6 +9,15 @@ import "jspsych/css/jspsych.css";
 import PreloadPlugin from "@jspsych/plugin-preload";
 import FullscreenPlugin from "@jspsych/plugin-fullscreen";
 import HtmlKeyboardResponsePlugin from "@jspsych/plugin-html-keyboard-response";
+import jsPsychPsychophysics from "@kurokida/jspsych-psychophysics";
+
+// The plugin defaults canvas_offsetY to 8 to avoid scrollbars, but our
+// .canvas-trial CSS class handles that with overflow: hidden instead.
+jsPsychPsychophysics.info.parameters.canvas_offsetY.default = 0;
+
+import { getRingPositions } from "../../functions/experiment/ringPositions.js";
+import { makeOrientedTriangleStimulus, makeColorPatchStimulus, makeFixationCross } from "../../functions/experiment/stimuli.js";
+import { makePsychophysicsTrial } from "../../functions/experiment/trialTemplates.js";
 
 // Since we load the following import after the jspsych/css/jspsych.css import, it always wins 
 // -> that way for modifications of the css we never need to kack jsPsych's own CSS
@@ -54,11 +63,29 @@ function makeTimeline(jsPsych, blurMonitor) {
   // Edit the pages in experiment/src/instructions.js.
   timeline.push(makeInstructions());
 
-  // ── Your experiment trials go here (between instructions and "Experiment Complete") ──
-  timeline.push({
-    type: HtmlKeyboardResponsePlugin,
-    stimulus: "<p><strong>Experiment Running</strong></p><p>This is a placeholder for your experiment trials. They run in fullscreen with blur monitoring active. Press any key to continue.</p>",
-  });
+  // ── Visual test: render stimuli on the invisible ring ──
+  // This is a temporary demo trial — will be replaced by real trial logic.
+  timeline.push(makePsychophysicsTrial({
+    choices: "ALL_KEYS",
+    stimuli: () => {
+      const { positions } = getRingPositions(6, 120);
+      const stims = [];
+
+      for (let i = 0; i < 3; i++) {
+        const orientation = Math.random() * 360;
+        stims.push(makeOrientedTriangleStimulus(positions[i].x, positions[i].y, orientation));
+      }
+
+      for (let i = 3; i < 6; i++) {
+        const hue = Math.random() * 360;
+        stims.push(makeColorPatchStimulus(positions[i].x, positions[i].y, hue));
+      }
+
+      stims.push(makeFixationCross());
+
+      return stims;
+    },
+  }));
 
   timeline.push({
     type: HtmlKeyboardResponsePlugin,
@@ -72,13 +99,6 @@ function makeTimeline(jsPsych, blurMonitor) {
  * The entire start() function exists because of a single constraint: you don't know where your code will run until runtime (JATOS or local)
  */
 async function start() {
-  // Push the trial background colour from Settings into a CSS variable so that
-  // style.css can reference it via var(--trial-bg). This keeps the colour
-  // configurable from ExperimentSettings.js without touching any CSS file.
-  document.documentElement.style.setProperty(
-    "--trial-bg",
-    Settings.display.trialBackgroundColor
-  );
 
   // The async keyword lets us use await inside the function, which lets us pause until we finish a process.
   // Loading the JATOS script takes time (the browser needs to fetch it from the network)
@@ -105,16 +125,18 @@ async function start() {
       const trials = jsPsych.data.get().values();
       const status = trials.length > 0 ? trials[0].experiment_status : undefined;
       const failed =
-        status === "failed_resize" || status === "failed_attention_check";
+        status === "failed_resize" ||
+        status === "failed_color_support" ||
+        status === "failed_attention_check";
 
       if (inJatos) {
         // Open the file cabinet (data), grab the files (get()), and photocopy them to a document any browser can handle (.json()).
         const resultJson = jsPsych.data.get().json();
 
         if (failed) {
-          // Screen-size failures free the enrollment slot — the participant
-          // never could have run, so we release the "started" count.
-          if (status === "failed_resize") {
+          // Screen-size and color-support failures free the enrollment slot —
+          // the participant never could have run, so we release the "started" count.
+          if (status === "failed_resize" || status === "failed_color_support") {
             for (let attempt = 0; attempt < 2; attempt++) {
               try {
                 const n = window.jatos.batchSession.get("started") ?? 0;
@@ -131,9 +153,10 @@ async function start() {
           // The message (max 255 chars) appears in JATOS's "message" results column.
           if (Settings.recruitment.useProlific) {
             // Redirect to Prolific with the appropriate failure code.
-            const redirectUrl = status === "failed_resize"
-              ? ProlificFailCodes.screenedOut
-              : ProlificFailCodes.attentionFailed;
+            const redirectUrl =
+              status === "failed_resize" || status === "failed_color_support"
+                ? ProlificFailCodes.screenedOut
+                : ProlificFailCodes.attentionFailed;
             window.jatos.endStudyAndRedirect(redirectUrl, false, status);
           } else {
             window.jatos.endStudy(resultJson, false, status);
