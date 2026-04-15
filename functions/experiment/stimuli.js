@@ -1,5 +1,5 @@
 /**
- * Stimulus factories for the cross-set–size experiment.
+ * Stimulus factories for psychophysics experiments.
  *
  * Both return plain stimulus objects consumable by jspsych-psychophysics.
  * All coordinates assume origin_center: true (0, 0 = canvas centre).
@@ -17,23 +17,27 @@ import { Settings } from "../../ExperimentSettings.js";
  * and rotates clockwise with increasing orientation (matching standard
  * orientation-report conventions).
  *
+ * The returned object stores orientationDeg, fill_color, and line_color as
+ * mutable properties read by drawFunc from the live stimulus instance. This
+ * means they can be updated at runtime (e.g. during a recall response) by
+ * writing to stimulus.instance.orientationDeg, .fill_color, or .line_color.
+ *
  * @param {number} x            Centre x (origin_center coords).
  * @param {number} y            Centre y (origin_center coords).
  * @param {number} orientationDeg  Orientation in degrees [0, 360).
  * @param {object} [opts]
  * @param {number} [opts.base]       Base width in px.
  * @param {number} [opts.height]     Height (apex to base) in px.
- * @param {string} [opts.fillColor]  Fill colour (defaults from Settings.stimuli).
- * @param {string} [opts.lineColor]  Stroke colour (defaults from Settings.stimuli).
+ * @param {number} [opts.lightness]  OKLCH lightness (defaults from Settings.stimuli).
+ * @param {number} [opts.chroma]     OKLCH chroma (defaults from Settings.stimuli).
  * @param {number} [opts.lineWidth]
  */
 export function makeOrientedTriangleStimulus(x, y, orientationDeg, opts = {}) {
-  const { lightness, chroma } = Settings.stimuli;
   const {
-    base = 19,
-    height = 33,
-    fillColor = `oklch(${lightness} 0 0)`,
-    lineColor = `oklch(${lightness} 0 0)`,
+    base = 28,
+    height = 50,
+    lightness = Settings.stimuli.lightness,
+    chroma = Settings.stimuli.chroma,
     lineWidth = 1,
   } = opts;
 
@@ -49,21 +53,29 @@ export function makeOrientedTriangleStimulus(x, y, orientationDeg, opts = {}) {
     { x: halfBase, y: baseY },      // base-right
   ];
 
-  const rad = (orientationDeg * Math.PI) / 180;
-  const cosA = Math.cos(rad);
-  const sinA = Math.sin(rad);
-  const rotated = unrotated.map((p) => ({
-    x: p.x * cosA - p.y * sinA,
-    y: p.x * sinA + p.y * cosA,
-  }));
-
   return {
     obj_type: "manual",
     stim_type: "oriented_triangle",
     origin_center: true,
     startX: x,
     startY: y,
+    orientationDeg: orientationDeg,
+    fill_color: `oklch(${lightness} 0 0)`,
+    line_color: `oklch(${lightness} 0 0)`,
+
     drawFunc: (stimulus, canvas, ctx) => {
+
+      // +90° offset: the unrotated apex points up (negative y), but atan2's
+      // 0° is rightward. Adding 90° rotates the apex from up to right,
+      // so the triangle points toward the mouse position.
+      const rad = ((stimulus.orientationDeg + 90) * Math.PI) / 180;
+      const cosA = Math.cos(rad);
+      const sinA = Math.sin(rad);
+      const rotated = unrotated.map((p) => ({
+        x: p.x * cosA - p.y * sinA,
+        y: p.x * sinA + p.y * cosA,
+      }));
+
       ctx.save();
       ctx.translate(stimulus.currentX, stimulus.currentY);
 
@@ -73,10 +85,10 @@ export function makeOrientedTriangleStimulus(x, y, orientationDeg, opts = {}) {
       ctx.lineTo(rotated[2].x, rotated[2].y);
       ctx.closePath();
 
-      ctx.fillStyle = fillColor;
+      ctx.fillStyle = stimulus.fill_color;
       ctx.fill();
       ctx.lineWidth = lineWidth;
-      ctx.strokeStyle = lineColor;
+      ctx.strokeStyle = stimulus.line_color;
       ctx.stroke();
 
       ctx.restore();
@@ -102,7 +114,7 @@ export function makeOrientedTriangleStimulus(x, y, orientationDeg, opts = {}) {
  */
 export function makeColorPatchStimulus(x, y, hueDeg, opts = {}) {
   const {
-    radius = 10,
+    radius = 15,
     lightness = Settings.stimuli.lightness,
     chroma = Settings.stimuli.chroma,
   } = opts;

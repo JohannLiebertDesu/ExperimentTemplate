@@ -21,3 +21,9 @@
 .jspsych-display-element:has(.canvas-trial) {
   overflow: hidden !important;
 }
+
+/* Allow instructions or other trials to use wider layouts (e.g. side-by-side
+   images). Apply via css_classes: "wide-content". */
+.wide-content #jspsych-content {
+  max-width: 85vw;
+}

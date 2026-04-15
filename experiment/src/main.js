@@ -1,9 +1,9 @@
-// This is your control flow — it decides what happens in what order. 
-// The import statements at the top are like calling in actors (plugins) from their dressing rooms (node_modules). 
-// The makeTimeline() function is your scene list. 
+// This is your control flow — it decides what happens in what order.
+// The import statements at the top are like calling in actors (plugins) from their dressing rooms (node_modules).
+// The makeTimeline() function is your scene list.
 // The start() function handles the "which theatre are we in?" logic (JATOS vs local).
 
-import { initJsPsych } from "jspsych";
+import { initJsPsych, ParameterType } from "jspsych";
 import "jspsych/css/jspsych.css";
 
 import PreloadPlugin from "@jspsych/plugin-preload";
@@ -15,11 +15,19 @@ import jsPsychPsychophysics from "@kurokida/jspsych-psychophysics";
 // .canvas-trial CSS class handles that with overflow: hidden instead.
 jsPsychPsychophysics.info.parameters.canvas_offsetY.default = 0;
 
+// The plugin defines startX/startY/endX/endY as STRING type (because they
+// accept "center"), but we pass numbers. Override to COMPLEX to silence
+// the thousands of "non-string value" warnings that flood the console.
+const posParams = ["startX", "startY", "endX", "endY"];
+for (const p of posParams) {
+  jsPsychPsychophysics.info.parameters.stimuli.nested[p].type = ParameterType.COMPLEX;
+}
+
 import { getRingPositions } from "../../functions/experiment/ringPositions.js";
 import { makeOrientedTriangleStimulus, makeColorPatchStimulus, makeFixationCross } from "../../functions/experiment/stimuli.js";
-import { makePsychophysicsTrial } from "../../functions/experiment/trialTemplates.js";
+import { makePsychophysicsTrial } from "../../functions/experiment/trialRendering.js";
 
-// Since we load the following import after the jspsych/css/jspsych.css import, it always wins 
+// Since we load the following import after the jspsych/css/jspsych.css import, it always wins
 // -> that way for modifications of the css we never need to kack jsPsych's own CSS
 import "./style.css";
 import { stampParticipantData } from "../../functions/global/participantID";
@@ -100,6 +108,25 @@ function makeTimeline(jsPsych, blurMonitor) {
  */
 async function start() {
 
+  // Global error handler — catches unhandled errors and displays them on screen
+  // so crashes don't result in a silent blank page. Remove for production if desired.
+  window.onerror = (msg, src, line, col, err) => {
+    document.body.innerHTML = `
+      <div style="padding:2rem; font-family:monospace; color:#c00; background:#fff;">
+        <h2>Experiment Error</h2>
+        <p>${msg}</p>
+        <p>at ${src}:${line}:${col}</p>
+        <pre>${err?.stack || ""}</pre>
+      </div>`;
+  };
+  window.onunhandledrejection = (e) => {
+    document.body.innerHTML = `
+      <div style="padding:2rem; font-family:monospace; color:#c00; background:#fff;">
+        <h2>Experiment Error (Promise)</h2>
+        <pre>${e.reason?.stack || e.reason}</pre>
+      </div>`;
+  };
+
   // The async keyword lets us use await inside the function, which lets us pause until we finish a process.
   // Loading the JATOS script takes time (the browser needs to fetch it from the network)
   await loadJatosScript();
@@ -118,6 +145,45 @@ async function start() {
     // Fires every time the participant switches away from or back to the tab.
     // The blur monitor uses this to count tab-leaves and warn/end accordingly.
     on_interaction_data_update: (data) => blurMonitor.handler(data),
+
+    // ── Canvas context cleanup ─────────────────────────────────────────────
+    // The psychophysics plugin creates a canvas per trial phase and sets
+    // references on the trial object (trial.context, trial.canvas, etc.) and
+    // on stimulus objects (stim.instance). After the trial the canvas is removed
+    // from the DOM, but these JS references prevent it from being garbage-collected.
+    // Over many trial phases this exhausts the browser's canvas memory.
+    //
+    // on_trial_start receives the resolved trial object — the same object the
+    // plugin's trial() method will modify. We capture it here so on_trial_finish
+    // can delete the references the plugin sets on it.
+    on_trial_start: (trial) => {
+      if (trial.type === jsPsychPsychophysics) {
+        jsPsych._lastPsychTrial = trial;
+      } else {
+        jsPsych._lastPsychTrial = null;
+      }
+    },
+    on_trial_finish: () => {
+      const trial = jsPsych._lastPsychTrial;
+      if (!trial) return;
+      jsPsych._lastPsychTrial = null;
+
+      // 1. stim.instance → class prototype → trial() closure → ctx → canvas
+      if (Array.isArray(trial.stimuli)) {
+        for (const stim of trial.stimuli) delete stim.instance;
+      }
+      // 2. Direct references the plugin sets on the trial object:
+      //    context/canvas → the main canvas and its 2D context
+      //    end_trial → closure capturing ctx, canvas, and all class definitions
+      //    getColorNum → closure capturing canvas_for_color (hidden utility canvas)
+      delete trial.context;
+      delete trial.canvas;
+      delete trial.end_trial;
+      delete trial.getColorNum;
+      delete trial.centerX;
+      delete trial.centerY;
+    },
+
     // jsPsych is told here what it should do with the data once the last trial in the timeline completes.
     on_finish: async () => {
       // Check whether the experiment ended early due to a screen or attention failure.
